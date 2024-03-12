@@ -107,4 +107,3 @@ index 487acf7..a54e6fc 100644
 - [x] out_ref
 - [ ] tx
 - [ ] redeemers
-# aiken-stringify
