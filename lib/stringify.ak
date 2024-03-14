@@ -13,7 +13,7 @@ use aiken/transaction/credential.{
 }
 use aiken/transaction/value.{MintedValue,
   Value, flatten, from_minted_value} as value_utils
-use utils.{format_cbor}
+use utils.{format_cbor, is_close, is_open, to_bytearray}
 
 pub fn int(val) -> String {
   string.from_int(val)
@@ -24,16 +24,17 @@ fn credential(cred: Credential) -> String {
     VerificationKeyCredential(hash) ->
       string.concat(
         @"VerificationKeyCredential(",
-        string.from_bytearray(hash) |> with_single_quote_surrounded,
+        string.from_bytearray(hash) |> with_single_quotes,
       )
         |> string.concat(@")")
     ScriptCredential(hash) ->
       string.concat(
         @"ScriptCredential(",
-        string.from_bytearray(hash) |> with_single_quote_surrounded,
+        string.from_bytearray(hash) |> with_single_quotes,
       )
         |> string.concat(@")")
   }
+    |> indent
 }
 
 pub fn stake_credential(self: Option<StakeCredential>) {
@@ -42,6 +43,7 @@ pub fn stake_credential(self: Option<StakeCredential>) {
     Some(Inline(cred)) -> credential(cred)
     _ -> fail @"Unsupported type of stake credential"
   }
+    |> indent
 }
 
 pub fn out_ref(self: OutputReference) {
@@ -49,21 +51,22 @@ pub fn out_ref(self: OutputReference) {
   @"OutputReference(TransactionId({}), {})"
     |> apply_params(
          [
-           string.from_bytearray(tx_hash) |> with_single_quote_surrounded,
+           string.from_bytearray(tx_hash) |> with_single_quotes,
            string.from_int(index),
          ],
        )
+    |> indent
 }
 
 pub fn address(self: Address) {
-  @"Address {\n\tpayment_credential: {},\n\tstake_credential: {},\n}"
+  @"Address {\npayment_credential: {},\nstake_credential: {},\n}"
     |> apply_params(
          [
            credential(self.payment_credential),
            stake_credential(self.stake_credential),
          ],
        )
-    |> with_indent(1)
+    |> indent
 }
 
 pub fn value(self: Value) {
@@ -74,7 +77,7 @@ pub fn value(self: Value) {
            |> list.map(fn(asset) { asset |> cbor.diagnostic |> format_cbor })
            |> string.join(@","),
        )
-    |> with_indent(1)
+    |> indent
 }
 
 pub fn minted_value(self: MintedValue) {
@@ -97,142 +100,143 @@ pub fn datum(self: Datum) {
 
 pub fn output(self: Output) {
   @"Output {\naddress: {},\nvalue: {},\ndatum: {}\n}"
-    |> apply_params(
-         [
-           address(self.address) |> with_indent(1),
-           value(self.value) |> with_indent(1),
-           datum(self.datum) |> with_indent(1),
-         ],
-       )
-    |> with_indent(1)
+    |> apply_params([address(self.address), value(self.value), datum(self.datum)])
+    |> indent
 }
 
 pub fn input(self: Input) {
   @"Input {\noutput_reference: {},\noutput: {}\n}"
-    |> apply_params(
-         [
-           out_ref(self.output_reference) |> with_indent(1),
-           output(self.output) |> with_indent(1),
-         ],
-       )
-    |> with_indent(1)
+    |> apply_params([out_ref(self.output_reference), output(self.output)])
+    |> indent
 }
 
 pub fn tx(self: Transaction) {
-  @"Transaction {\n\tredeemers: {},\n\textra_signatories: {},\n\tmint: {},\n\treference_inputs: {},\n\tinputs: {},\n\toutputs: {},\n}"
+  @"Transaction {\nredeemers: {},\nextra_signatories: {},\nmint: {},\nreference_inputs: {},\ninputs: {},\noutputs: {},\n}"
     |> apply_params(
          [
-           [
-             @"[",
-             @"\n\t]",
-           ]
+           list.map(
+             dict.keys(self.redeemers),
+             fn(purpose) {
+               @"Purpose"
+                 |> string.concat(
+                      when purpose is {
+                        Spend(ref) ->
+                          @"Spend"
+                            |> string.concat(
+                                 out_ref(ref)
+                                   |> with_parentheses,
+                               )
+                        Mint(pid) ->
+                          @"Mint"
+                            |> string.concat(
+                                 string.from_bytearray(pid)
+                                   |> with_single_quotes
+                                   |> with_parentheses,
+                               )
+                        _ -> @"<TBD>"
+                      }
+                        |> with_parentheses,
+                    )
+             },
+           )
              |> string.join(
-                  dict.foldr(
-                    self.redeemers,
-                    @"",
-                    fn(purpose, _datum, builder) {
-                      string.concat(
-                        builder,
-                        when purpose is {
-                          Spend(ref) ->
-                            [
-                              @"\nSpend(", @"),",
-                            ]
-                              |> string.join(out_ref(ref))
-                          Mint(pid) ->
-                            [
-                              @"\nMint(", @"),",
-                            ]
-                              |> string.join(
-                                   string.from_bytearray(pid)
-                                     |> with_single_quote_surrounded,
-                                 )
-                          _ -> @"<TBD>"
-                        }
-                          |> with_indent(2),
-                      )
-                    },
-                  ),
-                ),
-           [@"[", @"]"]
-             |> string.join(
-                  self.extra_signatories
-                    |> list.map(
-                         fn(sig) {
-                           string.from_bytearray(sig)
-                             |> with_single_quote_surrounded
-                         },
-                       )
-                    |> string.join(@", "),
-                ),
-           minted_value(self.mint) |> with_indent(1),
+                  @",\n",
+                )
+             |> as_block
+             |> with_square_brackets,
+           self.extra_signatories
+             |> list.map(
+                  fn(sig) {
+                    string.from_bytearray(sig)
+                      |> with_single_quotes
+                  },
+                )
+             |> string.join(@", ")
+             |> with_square_brackets,
+           minted_value(self.mint),
            when self.reference_inputs is {
              [] -> @"[]"
              _ ->
-               @"[\n"
-                 |> string.concat(
-                      list.map(self.reference_inputs, fn(inp) { input(inp) })
-                        |> string.join(
-                             @",\n",
-                           ),
+               list.map(self.reference_inputs, fn(inp) { input(inp) })
+                 |> string.join(
+                      @",\n",
                     )
-                 |> string.concat(
-                      @"\n]",
-                    )
+                 |> as_block
+                 |> with_square_brackets
            },
            when self.inputs is {
              [] -> @"[]"
              _ ->
-               [
-                 @"[\n",
-                 @"\n]",
-               ]
+               list.map(self.inputs, fn(inp) { input(inp) })
                  |> string.join(
-                      list.map(self.inputs, fn(inp) { input(inp) })
-                        |> string.join(
-                             @",\n",
-                           ),
+                      @",\n",
                     )
-                 |> with_indent(1)
+                 |> as_block
+                 |> with_square_brackets
            },
            when self.outputs is {
              [] -> @"[]"
              _ ->
-               [
-                 @"[\n",
-                 @"\n]",
-               ]
+               list.map(self.outputs, fn(out) { output(out) })
                  |> string.join(
-                      list.map(self.outputs, fn(out) { output(out) })
-                        |> string.join(
-                             @",\n",
-                           ),
+                      @",\n",
                     )
-                 |> with_indent(1)
+                 |> as_block
+                 |> with_square_brackets
            },
          ],
        )
-    |> with_indent(1)
+    |> indent
 }
 
 // ==========private fn============
-fn indent(lvl: Int) {
-  list.repeat(@"\t", lvl) |> string.join(@"")
+fn tab(lvl: Int) {
+  list.repeat(@"  ", lvl) |> string.join(@"")
 }
 
-pub fn with_indent(str: String, lvl: Int) {
-  do_with_indent(string.to_bytearray(str), lvl) |> bytearray.to_string
+pub fn indent(str: String) {
+  do_indent(string.to_bytearray(str), 0) |> bytearray.to_string
 }
 
-fn do_with_indent(bytes: ByteArray, lvl: Int) {
-  when bytearray.index_of(bytes, "\n") is {
-    Some((_from, to)) ->
-      bytearray.slice(bytes, 0, to)
+pub fn log(self: a, serializer: fn(a) -> String) {
+  trace serializer(self)
+  self
+}
+
+fn do_indent(bytes: ByteArray, lvl: Int) {
+  let next_newline_cursor = bytearray.index_of(bytes, "\n")
+  when next_newline_cursor is {
+    Some((_, cursor)) -> {
+      let left = bytearray.take(bytes, cursor)
+      let right = bytearray.drop(bytes, cursor + 1)
+      let indent_lvl =
+        bytearray.foldl(
+          left,
+          lvl,
+          fn(byte, cur) {
+            if is_open(to_bytearray(byte)) {
+              cur + 1
+            } else if is_close(to_bytearray(byte)) {
+              cur - 1
+            } else {
+              cur
+            }
+          },
+        )
+      left
+        |> bytearray.concat("\n")
         |> bytearray.concat(
-             indent(lvl)
+             tab(
+               if is_close(bytearray.slice(bytes, cursor + 1, cursor + 1)) {
+                 indent_lvl - 1
+               } else {
+                 indent_lvl
+               },
+             )
                |> bytearray.from_string,
            )
-        |> bytearray.concat(bytes |> bytearray.drop(to + 1) |> do_with_indent(lvl))
+        |> bytearray.concat(do_indent(right, indent_lvl))
+    }
     None -> bytes
   }
 }
@@ -258,6 +262,22 @@ fn do_apply_params(template: ByteArray, params: List<String>) -> ByteArray {
   }
 }
 
-fn with_single_quote_surrounded(builder: String) {
+fn with_single_quotes(builder: String) {
   [@"'", @"'"] |> string.join(builder)
+}
+
+fn with_parentheses(builder: String) {
+  [@"(", @")"] |> string.join(builder)
+}
+
+fn with_square_brackets(builder: String) {
+  [@"[", @"]"] |> string.join(builder)
+}
+
+fn as_block(builder: String) {
+  [
+    @"\n",
+    @"\n",
+  ]
+    |> string.join(builder)
 }

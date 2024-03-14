@@ -85,7 +85,7 @@ pub fn format_cbor(cbr: String) {
   cbr |> bytearray.from_string |> do_format_cbor |> bytearray.to_string
 }
 
-fn to_bytearray(byte: Int) {
+pub fn to_bytearray(byte: Int) {
   #"" |> bytearray.push(byte)
 }
 
