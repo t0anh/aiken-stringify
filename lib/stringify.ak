@@ -84,8 +84,8 @@ fn do_value(self: Value) {
                 fn(asset) {
                   let (pid, name, qty) = asset
                   [
-                    string.from_bytearray(pid) |> with_single_quotes,
-                    string.from_bytearray(name) |> with_single_quotes,
+                    to_safe_string(pid) |> with_single_quotes,
+                    to_safe_string(name) |> with_single_quotes,
                     string.from_int(qty),
                   ]
                     |> string.join(@", ")
@@ -508,11 +508,20 @@ pub fn do_format_cbor(bytes) {
     |> first_of_quad
 }
 
-pub fn to_safe_code(code: Int) -> Int {
+fn to_safe_code(code: Int) -> Int {
   if code > 127 {
     // fallback to '?' when the code is a special character
     63
   } else {
     code
   }
+}
+
+fn to_safe_string(bytes: ByteArray) {
+  bytearray.foldr(
+    bytes,
+    "",
+    fn(byte, normed_bytes) { bytearray.push(normed_bytes, to_safe_code(byte)) },
+  )
+    |> bytearray.to_string
 }
