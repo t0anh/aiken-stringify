@@ -1,6 +1,5 @@
 use aiken/builtin
 use aiken/bytearray
-use aiken/list
 
 pub fn first_of_quad(quad: (a, b, c, d)) {
   quad.1st
@@ -34,16 +33,8 @@ pub fn is_close(chr: ByteArray) {
   }
 }
 
-fn indent(self: ByteArray, level: Int) {
-  self
-    |> bytearray.concat(
-         list.repeat("\t", level)
-           |> list.reduce("", bytearray.concat),
-       )
-}
-
-pub fn newline(self: ByteArray, indent_lvl: Int) {
-  self |> bytearray.concat("\n") |> indent(indent_lvl)
+pub fn newline(self: ByteArray, _indent_lvl: Int) {
+  self |> bytearray.concat("\n")
 }
 
 pub fn to_decimal(byte: Int) {

@@ -92,6 +92,18 @@ test log_output_2() {
   ( my_output |> log(stringify.output) ) == my_output
 }
 
+test log_data() {
+  let struct =
+    MyDatum {
+      bytes: "bytes",
+      int: 1,
+      str: @"str",
+      int_list: [1, 2, 3, 4],
+      bytes_list: ["1", "2", "3"],
+    }
+  ( struct |> log(fn(d) { stringify.data(d) }) ) == struct
+}
+
 fn script_purpose_compare(a: ScriptPurpose, b: ScriptPurpose) {
   bytearray.compare(
     a |> cbor.diagnostic |> string.to_bytearray,
