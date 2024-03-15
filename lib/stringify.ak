@@ -14,7 +14,6 @@ use aiken/transaction/credential.{
 }
 use aiken/transaction/value.{MintedValue,
   Value, flatten, from_minted_value} as value_utils
-use utils.{is_close, is_open, to_bytearray}
 
 pub fn int(val) -> String {
   string.from_int(val)
