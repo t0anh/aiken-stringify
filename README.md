@@ -49,7 +49,7 @@ We get:
 
 ```bash
 Input {
-     output_reference: OutputReference(TransactionId(tx_0), 0),
+     output_reference: OutputReference(TransactionId('tx_0'), 0),
      output: Output {
        address: Address {
          payment_credential: ScriptCredential('script_hash')
