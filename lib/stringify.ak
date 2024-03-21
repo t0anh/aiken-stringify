@@ -247,8 +247,7 @@ pub fn indent(str: String) {
 }
 
 pub fn log(self: a, msg: String, serializer: fn(a) -> String) -> a {
-  trace string.concat(msg, serializer(self))
-  self
+  builtin.debug(string.concat(msg, serializer(self)), self)
 }
 
 fn do_indent(bytes: ByteArray, lvl: Int) {
