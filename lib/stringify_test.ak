@@ -10,15 +10,10 @@ use aiken/transaction/credential.{
   Address, Inline, ScriptCredential, VerificationKeyCredential,
 }
 use aiken/transaction/value
-use stringify
-
-fn log(self: a, serializer: fn(a) -> String) {
-  trace serializer(self)
-  self
-}
+use debug
 
 test log_int() {
-  ( 1 |> log(stringify.int) ) == 1
+  ( 1 |> debug.int(@"int") ) == 1
 }
 
 test log_value() {
@@ -27,7 +22,7 @@ test log_value() {
       |> value.add("pid", "name", 1)
   (
     my_value
-      |> log(stringify.value)
+      |> debug.value(@"value")
   ) == my_value
 }
 
@@ -45,7 +40,10 @@ test log_input() {
         reference_script: None,
       },
     }
-  ( my_input |> log(stringify.input) ) == my_input
+  (
+    my_input
+      |> debug.input(@"input")
+  ) == my_input
 }
 
 test log_output() {
@@ -59,7 +57,7 @@ test log_output() {
       datum: NoDatum,
       reference_script: None,
     }
-  ( my_output |> log(stringify.output) ) == my_output
+  ( my_output |> debug.output(@"output") ) == my_output
 }
 
 type MyDatum {
@@ -89,7 +87,7 @@ test log_output_2() {
       ),
       reference_script: None,
     }
-  ( my_output |> log(stringify.output) ) == my_output
+  ( my_output |> debug.output(@"output with datum") ) == my_output
 }
 
 test log_data() {
@@ -101,7 +99,10 @@ test log_data() {
       int_list: [1, 2, 3, 4],
       bytes_list: ["1", "2", "3"],
     }
-  ( struct |> log(fn(d) { stringify.data(d) }) ) == struct
+  (
+    struct
+      |> debug.diagnostic(@"data", cbor.diagnostic(struct))
+  ) == struct
 }
 
 fn script_purpose_compare(a: ScriptPurpose, b: ScriptPurpose) {
@@ -184,5 +185,5 @@ test log_tx() {
         },
       ],
     }
-  ( tx |> log(stringify.tx) ) == tx
+  ( tx |> debug.tx ) == tx
 }

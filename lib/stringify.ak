@@ -19,7 +19,7 @@ pub fn int(val) -> String {
   string.from_int(val)
 }
 
-fn credential(cred: Credential) -> String {
+pub fn credential(cred: Credential) -> String {
   when cred is {
     VerificationKeyCredential(hash) ->
       string.concat(
@@ -246,10 +246,6 @@ pub fn indent(str: String) {
   do_indent(string.to_bytearray(str), 0) |> bytearray.to_string
 }
 
-pub fn log(self: a, msg: String, serializer: fn(a) -> String) -> a {
-  builtin.debug(string.concat(msg, serializer(self)), self)
-}
-
 fn do_indent(bytes: ByteArray, lvl: Int) {
   let next_newline_cursor = bytearray.index_of(bytes, "\n")
   when next_newline_cursor is {
@@ -329,30 +325,30 @@ fn as_block(builder: String) {
     |> string.join(builder)
 }
 
-pub fn first_of_quad(quad: (a, b, c, d)) {
+fn first_of_quad(quad: (a, b, c, d)) {
   quad.1st
 }
 
-pub fn first_of_triple(tuple: (a, b, c)) {
+fn first_of_triple(tuple: (a, b, c)) {
   tuple.1st
 }
 
-pub fn pop_back(self: ByteArray, qty: Int) {
+fn pop_back(self: ByteArray, qty: Int) {
   bytearray.take(self, builtin.length_of_bytearray(self) - qty)
 }
 
-pub fn last_char(self: ByteArray) {
+fn last_char(self: ByteArray) {
   bytearray.drop(self, builtin.length_of_bytearray(self) - 1)
 }
 
-pub fn is_open(chr: ByteArray) {
+fn is_open(chr: ByteArray) {
   or {
     chr == "[",
     chr == "{",
   }
 }
 
-pub fn is_close(chr: ByteArray) {
+fn is_close(chr: ByteArray) {
   or {
     chr == "]",
     chr == "}",
@@ -363,7 +359,7 @@ pub fn newline(self: ByteArray) {
   self |> bytearray.concat("\n")
 }
 
-pub fn to_decimal(byte: Int) {
+fn to_decimal(byte: Int) {
   if byte >= 97 && byte <= 102 {
     byte - 97 + 10
   } else if byte >= 65 && byte <= 70 {
@@ -375,7 +371,7 @@ pub fn to_decimal(byte: Int) {
   }
 }
 
-pub fn hex_to_string(hex: ByteArray) {
+fn hex_to_string(hex: ByteArray) {
   bytearray.foldl(
     // pushing a dummy byte to flush the last character 
     hex |> bytearray.concat("0"),
@@ -398,18 +394,18 @@ pub fn hex_to_string(hex: ByteArray) {
     |> first_of_triple
 }
 
-fn format_cbor(cbr: String) {
+pub fn format_cbor(cbr: String) {
   cbr
     |> bytearray.from_string
     |> do_format_cbor
     |> bytearray.to_string
 }
 
-pub fn to_bytearray(byte: Int) {
+fn to_bytearray(byte: Int) {
   #"" |> bytearray.push(byte)
 }
 
-pub fn do_format_cbor(bytes) {
+fn do_format_cbor(bytes) {
   bytes
     |> bytearray.foldl(
          ("", 0, False, ""),

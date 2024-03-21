@@ -84,7 +84,7 @@ So we can attach it to anywhere like this:
 
 ```diff
 Input {
-  output_reference: OutputReference(TransactionId(tx_0), 0),
+  output_reference: OutputReference(TransactionId('tx_0'), 0),
   output: Output {
     address: Address {
       payment_credential: ScriptCredential('script_hash')
@@ -105,17 +105,21 @@ Input {
 + |> log(stringify.input)
 ```
 
+> You can use defined loggers inside the `debug` module
+
 ## Supported serializers
 
 - [x] input
 - [x] output
 - [x] credential
+- [x] address
 - [x] value
 - [x] minted_value
 - [x] data
 - [x] out_ref
 - [x] tx
 - [x] redeemers
+- [ ] any
 
 ## License
 
