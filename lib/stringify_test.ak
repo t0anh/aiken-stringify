@@ -1,7 +1,6 @@
 use aiken/bytearray
 use aiken/cbor
 use aiken/dict
-use aiken/string
 use aiken/transaction.{
   InlineDatum, Input, Mint, NoDatum, Output, OutputReference, ScriptPurpose,
   Spend, Transaction, TransactionId,
@@ -106,10 +105,7 @@ test log_data() {
 }
 
 fn script_purpose_compare(a: ScriptPurpose, b: ScriptPurpose) {
-  bytearray.compare(
-    a |> cbor.diagnostic |> string.to_bytearray,
-    b |> cbor.diagnostic |> string.to_bytearray,
-  )
+  bytearray.compare(cbor.serialise(a), cbor.serialise(b))
 }
 
 test log_tx() {
@@ -119,21 +115,21 @@ test log_tx() {
       ..t,
       redeemers: t.redeemers
         |> dict.insert(
-             Spend(OutputReference(TransactionId("tx_1"), 12)),
-             Void,
-             script_purpose_compare,
-           )
+            Spend(OutputReference(TransactionId("tx_1"), 12)),
+            Void,
+            script_purpose_compare,
+          )
         |> dict.insert(
-             Mint("policy"),
-             MyDatum {
-               bytes: "bytes",
-               int: 1,
-               str: @"str",
-               int_list: [1, 2, 3, 4],
-               bytes_list: ["1", "2", "3"],
-             },
-             script_purpose_compare,
-           ),
+            Mint("policy"),
+            MyDatum {
+              bytes: "bytes",
+              int: 1,
+              str: @"str",
+              int_list: [1, 2, 3, 4],
+              bytes_list: ["1", "2", "3"],
+            },
+            script_purpose_compare,
+          ),
       extra_signatories: ["sig1", "sig2"],
       mint: value.from_asset("policy_id", "asset_name", 112)
         |> value.add("policy_id", "asset_name_2", 1)
