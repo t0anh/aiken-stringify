@@ -13,42 +13,21 @@ use aiken/transaction/value
 use debug
 
 test log_int() {
-  ( 1 |> debug.int(@"int") ) == 1
+  1 |> debug.int(@"int")
+  True
 }
 
 test log_value() {
-  let my_value =
-    value.from_lovelace(111_000_000)
-      |> value.add("pid", "name", 1)
-  (
-    my_value
-      |> debug.value(@"value")
-  ) == my_value
+  value.from_lovelace(111_000_000)
+    |> value.add("pid", "name", 1)
+    |> debug.value(@"value")
+  True
 }
 
 test log_input() {
-  let my_input =
-    Input {
-      output_reference: OutputReference(TransactionId("tx_0"), 0),
-      output: Output {
-        value: value.from_lovelace(111_000_000) |> value.add("pid", "name", 1),
-        address: Address {
-          payment_credential: ScriptCredential("script_hash"),
-          stake_credential: None,
-        },
-        datum: NoDatum,
-        reference_script: None,
-      },
-    }
-  (
-    my_input
-      |> debug.input(@"input")
-  ) == my_input
-}
-
-test log_output() {
-  let my_output =
-    Output {
+  Input {
+    output_reference: OutputReference(TransactionId("tx_0"), 0),
+    output: Output {
       value: value.from_lovelace(111_000_000) |> value.add("pid", "name", 1),
       address: Address {
         payment_credential: ScriptCredential("script_hash"),
@@ -56,8 +35,24 @@ test log_output() {
       },
       datum: NoDatum,
       reference_script: None,
-    }
-  ( my_output |> debug.output(@"output") ) == my_output
+    },
+  }
+    |> debug.input(@"input")
+  True
+}
+
+test log_output() {
+  Output {
+    value: value.from_lovelace(111_000_000) |> value.add("pid", "name", 1),
+    address: Address {
+      payment_credential: ScriptCredential("script_hash"),
+      stake_credential: None,
+    },
+    datum: NoDatum,
+    reference_script: None,
+  }
+    |> debug.output(@"output")
+  True
 }
 
 type MyDatum {
@@ -69,40 +64,37 @@ type MyDatum {
 }
 
 test log_output_2() {
-  let my_output =
-    Output {
-      value: value.from_lovelace(111_000_000) |> value.add("pid", "name", 1),
-      address: Address {
-        payment_credential: ScriptCredential("script_hash"),
-        stake_credential: None,
+  Output {
+    value: value.from_lovelace(111_000_000) |> value.add("pid", "name", 1),
+    address: Address {
+      payment_credential: ScriptCredential("script_hash"),
+      stake_credential: None,
+    },
+    datum: InlineDatum(
+      MyDatum {
+        bytes: "bytes",
+        int: 1,
+        str: @"str",
+        int_list: [1, 2, 3, 4],
+        bytes_list: ["1", "2", "3"],
       },
-      datum: InlineDatum(
-        MyDatum {
-          bytes: "bytes",
-          int: 1,
-          str: @"str",
-          int_list: [1, 2, 3, 4],
-          bytes_list: ["1", "2", "3"],
-        },
-      ),
-      reference_script: None,
-    }
-  ( my_output |> debug.output(@"output with datum") ) == my_output
+    ),
+    reference_script: None,
+  }
+    |> debug.output(@"output with datum")
+  True
 }
 
 test log_data() {
-  let struct =
-    MyDatum {
-      bytes: "bytes",
-      int: 1,
-      str: @"str",
-      int_list: [1, 2, 3, 4],
-      bytes_list: ["1", "2", "3"],
-    }
-  (
-    struct
-      |> debug.diagnostic(@"data", cbor.diagnostic(struct))
-  ) == struct
+  MyDatum {
+    bytes: "bytes",
+    int: 1,
+    str: @"str",
+    int_list: [1, 2, 3, 4],
+    bytes_list: ["1", "2", "3"],
+  }
+    |> debug.data(@"data")
+  True
 }
 
 fn script_purpose_compare(a: ScriptPurpose, b: ScriptPurpose) {
@@ -114,65 +106,33 @@ fn script_purpose_compare(a: ScriptPurpose, b: ScriptPurpose) {
 
 test log_tx() {
   let t = transaction.placeholder()
-  let tx =
-    Transaction {
-      ..t,
-      redeemers: t.redeemers
-        |> dict.insert(
-             Spend(OutputReference(TransactionId("tx_1"), 12)),
-             Void,
-             script_purpose_compare,
-           )
-        |> dict.insert(
-             Mint("policy"),
-             MyDatum {
-               bytes: "bytes",
-               int: 1,
-               str: @"str",
-               int_list: [1, 2, 3, 4],
-               bytes_list: ["1", "2", "3"],
-             },
-             script_purpose_compare,
-           ),
-      extra_signatories: ["sig1", "sig2"],
-      mint: value.from_asset("policy_id", "asset_name", 112)
-        |> value.add("policy_id", "asset_name_2", 1)
-        |> value.to_minted_value,
-      inputs: [
-        Input {
-          output_reference: OutputReference(TransactionId("tx_1"), 12),
-          output: Output {
-            value: value.from_lovelace(2_000_000),
-            address: Address {
-              payment_credential: VerificationKeyCredential("public_key"),
-              stake_credential: Some(
-                Inline(VerificationKeyCredential("stake_key")),
-              ),
-            },
-            datum: NoDatum,
-            reference_script: None,
+  Transaction {
+    ..t,
+    redeemers: t.redeemers
+      |> dict.insert(
+          Spend(OutputReference(TransactionId("tx_1"), 12)),
+          Void,
+          script_purpose_compare,
+        )
+      |> dict.insert(
+          Mint("policy"),
+          MyDatum {
+            bytes: "bytes",
+            int: 1,
+            str: @"str",
+            int_list: [1, 2, 3, 4],
+            bytes_list: ["1", "2", "3"],
           },
-        },
-      ],
-      outputs: [
-        Output {
-          value: value.from_lovelace(111_000_000) |> value.add("pid", "name", 1),
-          address: Address {
-            payment_credential: ScriptCredential("script_hash"),
-            stake_credential: None,
-          },
-          datum: InlineDatum(
-            MyDatum {
-              bytes: "bytes",
-              int: 1,
-              str: @"str",
-              int_list: [1, 2, 3, 4],
-              bytes_list: ["1", "2", "3"],
-            },
-          ),
-          reference_script: None,
-        },
-        Output {
+          script_purpose_compare,
+        ),
+    extra_signatories: ["sig1", "sig2"],
+    mint: value.from_asset("policy_id", "asset_name", 112)
+      |> value.add("policy_id", "asset_name_2", 1)
+      |> value.to_minted_value,
+    inputs: [
+      Input {
+        output_reference: OutputReference(TransactionId("tx_1"), 12),
+        output: Output {
           value: value.from_lovelace(2_000_000),
           address: Address {
             payment_credential: VerificationKeyCredential("public_key"),
@@ -183,7 +143,37 @@ test log_tx() {
           datum: NoDatum,
           reference_script: None,
         },
-      ],
-    }
-  ( tx |> debug.tx ) == tx
+      },
+    ],
+    outputs: [
+      Output {
+        value: value.from_lovelace(111_000_000) |> value.add("pid", "name", 1),
+        address: Address {
+          payment_credential: ScriptCredential("script_hash"),
+          stake_credential: None,
+        },
+        datum: InlineDatum(
+          MyDatum {
+            bytes: "bytes",
+            int: 1,
+            str: @"str",
+            int_list: [1, 2, 3, 4],
+            bytes_list: ["1", "2", "3"],
+          },
+        ),
+        reference_script: None,
+      },
+      Output {
+        value: value.from_lovelace(2_000_000),
+        address: Address {
+          payment_credential: VerificationKeyCredential("public_key"),
+          stake_credential: Some(Inline(VerificationKeyCredential("stake_key"))),
+        },
+        datum: NoDatum,
+        reference_script: None,
+      },
+    ],
+  }
+    |> debug.tx
+  True
 }

@@ -8,11 +8,11 @@ use aiken/transaction/credential.{Address, Credential}
 use aiken/transaction/value.{MintedValue, Value}
 use stringify
 
-fn debug(self: a, name: String, serializer: fn(a) -> String) -> a {
-  builtin.debug(string.concat(name, serializer(self)), self)
+fn debug(self: a, name: String, serializer: fn(a) -> String) -> Void {
+  builtin.debug(string.concat(name, serializer(self)), self) |> fn(_) { Void }
 }
 
-pub fn diagnostic(self: a, name: String, d: String) -> a {
+pub fn diagnostic(self: a, name: String, d: String) {
   debug(
     self,
     string.concat(
