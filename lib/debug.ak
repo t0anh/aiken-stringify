@@ -151,3 +151,14 @@ pub fn datum(self: Datum, name: String) {
     stringify.datum,
   )
 }
+
+pub fn bytearray(self: ByteArray, name: String) {
+  debug(
+    self,
+    string.concat(
+      name,
+      @"\n",
+    ),
+    stringify.bytearray,
+  )
+}

@@ -119,7 +119,7 @@ Input {
 - [x] out_ref
 - [x] tx
 - [x] redeemers
-- [ ] any
+- [x] bytearray
 
 ## License
 

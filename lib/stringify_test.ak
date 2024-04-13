@@ -177,3 +177,26 @@ test log_tx() {
     |> debug.tx
   True
 }
+
+test any_1() {
+  1 |> debug.data(@"int")
+  None |> debug.data(@"None")
+  Some(1) |> debug.data(@"Some(1)")
+  value.from_lovelace(123_456)
+    |> value.add("pid", "name", -1)
+    |> value.to_dict
+    |> debug.data(@"Dict")
+  (1, 2, [1, 2, 3]) |> debug.data(@"Tuple")
+  [1, 2, 3] |> debug.data(@"List")
+  True
+}
+
+test bytearray_1() {
+  "627974656172726179" |> debug.bytearray(@"ByteArray")
+  True
+}
+
+test bytearray_2() {
+  #"fab2208123" |> debug.bytearray(@"ByteArray")
+  True
+}

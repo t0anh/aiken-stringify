@@ -19,6 +19,12 @@ pub fn int(val) -> String {
   string.from_int(val)
 }
 
+pub fn bytearray(bytes: ByteArray) {
+  bytes
+    |> to_safe_string
+    |> with_single_quotes
+}
+
 pub fn credential(cred: Credential) -> String {
   when cred is {
     VerificationKeyCredential(hash) ->
@@ -50,11 +56,11 @@ fn do_out_ref(self: OutputReference) {
   let OutputReference(TransactionId(tx_hash), index) = self
   @"OutputReference(TransactionId({}), {})"
     |> apply_params(
-         [
-           string.from_bytearray(tx_hash) |> with_single_quotes,
-           string.from_int(index),
-         ],
-       )
+        [
+          string.from_bytearray(tx_hash) |> with_single_quotes,
+          string.from_int(index),
+        ],
+      )
 }
 
 pub fn address(self: Address) {
@@ -64,11 +70,11 @@ pub fn address(self: Address) {
 fn do_address(self: Address) {
   @"Address {\npayment_credential: {},\nstake_credential: {},\n}"
     |> apply_params(
-         [
-           credential(self.payment_credential),
-           stake_credential(self.stake_credential),
-         ],
-       )
+        [
+          credential(self.payment_credential),
+          stake_credential(self.stake_credential),
+        ],
+      )
 }
 
 pub fn value(self: Value) {
@@ -78,27 +84,27 @@ pub fn value(self: Value) {
 fn do_value(self: Value) {
   @"Value"
     |> string.concat(
-         self
-           |> flatten
-           |> list.map(
-                fn(asset) {
-                  let (pid, name, qty) = asset
-                  [
-                    to_safe_string(pid) |> with_single_quotes,
-                    to_safe_string(name) |> with_single_quotes,
-                    string.from_int(qty),
-                  ]
-                    |> string.join(@", ")
-                    |> with_parentheses
-                },
-              )
-           |> string.join(
-                @",\n",
-              )
-           |> as_block
-           |> with_square_brackets
-           |> with_parentheses,
-       )
+        self
+          |> flatten
+          |> list.map(
+              fn(asset) {
+                let (pid, name, qty) = asset
+                [
+                  to_safe_string(pid) |> with_single_quotes,
+                  to_safe_string(name) |> with_single_quotes,
+                  string.from_int(qty),
+                ]
+                  |> string.join(@", ")
+                  |> with_parentheses
+              },
+            )
+          |> string.join(
+              @",\n",
+            )
+          |> as_block
+          |> with_square_brackets
+          |> with_parentheses,
+      )
 }
 
 pub fn minted_value(self: MintedValue) {
@@ -117,11 +123,11 @@ pub fn datum(self: Datum) {
     InlineDatum(dtm) ->
       @"InlineDatum({})"
         |> apply_params(
-             [
-               cbor.diagnostic(dtm)
-                 |> format_cbor,
-             ],
-           )
+            [
+              cbor.diagnostic(dtm)
+                |> format_cbor,
+            ],
+          )
     _ -> fail @"unsupported datum"
   }
 }
@@ -158,16 +164,16 @@ fn do_redeemers(self: Dict<ScriptPurpose, Redeemer>) {
           Spend(ref) ->
             @"Spend"
               |> string.concat(
-                   out_ref(ref)
-                     |> with_parentheses,
-                 )
+                  out_ref(ref)
+                    |> with_parentheses,
+                )
           Mint(pid) ->
             @"Mint"
               |> string.concat(
-                   string.from_bytearray(pid)
-                     |> with_single_quotes
-                     |> with_parentheses,
-                 )
+                  string.from_bytearray(pid)
+                    |> with_single_quotes
+                    |> with_parentheses,
+                )
           WithdrawFrom(cred) ->
             string.concat(
               @"WithdrawFrom",
@@ -181,8 +187,8 @@ fn do_redeemers(self: Dict<ScriptPurpose, Redeemer>) {
     },
   )
     |> string.join(
-         @",\n",
-       )
+        @",\n",
+      )
     |> as_block
     |> with_square_brackets
 }
@@ -190,50 +196,50 @@ fn do_redeemers(self: Dict<ScriptPurpose, Redeemer>) {
 pub fn tx(self: Transaction) {
   @"Transaction {\nredeemers: {},\nextra_signatories: {},\nmint: {},\nreference_inputs: {},\ninputs: {},\noutputs: {},\n}"
     |> apply_params(
-         [
-           do_redeemers(self.redeemers),
-           self.extra_signatories
-             |> list.map(
-                  fn(sig) {
-                    string.from_bytearray(sig)
-                      |> with_single_quotes
-                  },
-                )
-             |> string.join(@", ")
-             |> with_square_brackets,
-           value(self.mint |> from_minted_value),
-           when self.reference_inputs is {
-             [] -> @"[]"
-             _ ->
-               list.map(self.reference_inputs, fn(inp) { do_input(inp) })
-                 |> string.join(
-                      @",\n",
-                    )
-                 |> as_block
-                 |> with_square_brackets
-           },
-           when self.inputs is {
-             [] -> @"[]"
-             _ ->
-               list.map(self.inputs, fn(inp) { do_input(inp) })
-                 |> string.join(
-                      @",\n",
-                    )
-                 |> as_block
-                 |> with_square_brackets
-           },
-           when self.outputs is {
-             [] -> @"[]"
-             _ ->
-               list.map(self.outputs, fn(out) { do_output(out) })
-                 |> string.join(
-                      @",\n",
-                    )
-                 |> as_block
-                 |> with_square_brackets
-           },
-         ],
-       )
+        [
+          do_redeemers(self.redeemers),
+          self.extra_signatories
+            |> list.map(
+                fn(sig) {
+                  string.from_bytearray(sig)
+                    |> with_single_quotes
+                },
+              )
+            |> string.join(@", ")
+            |> with_square_brackets,
+          value(self.mint |> from_minted_value),
+          when self.reference_inputs is {
+            [] -> @"[]"
+            _ ->
+              list.map(self.reference_inputs, fn(inp) { do_input(inp) })
+                |> string.join(
+                    @",\n",
+                  )
+                |> as_block
+                |> with_square_brackets
+          },
+          when self.inputs is {
+            [] -> @"[]"
+            _ ->
+              list.map(self.inputs, fn(inp) { do_input(inp) })
+                |> string.join(
+                    @",\n",
+                  )
+                |> as_block
+                |> with_square_brackets
+          },
+          when self.outputs is {
+            [] -> @"[]"
+            _ ->
+              list.map(self.outputs, fn(out) { do_output(out) })
+                |> string.join(
+                    @",\n",
+                  )
+                |> as_block
+                |> with_square_brackets
+          },
+        ],
+      )
     |> indent
 }
 
@@ -269,15 +275,15 @@ fn do_indent(bytes: ByteArray, lvl: Int) {
       left
         |> bytearray.concat("\n")
         |> bytearray.concat(
-             tab(
-               if is_close(bytearray.slice(bytes, cursor + 1, cursor + 1)) {
-                 indent_lvl - 1
-               } else {
-                 indent_lvl
-               },
-             )
-               |> bytearray.from_string,
-           )
+            tab(
+              if is_close(bytearray.slice(bytes, cursor + 1, cursor + 1)) {
+                indent_lvl - 1
+              } else {
+                indent_lvl
+              },
+            )
+              |> bytearray.from_string,
+          )
         |> bytearray.concat(do_indent(right, indent_lvl))
     }
     None -> bytes
@@ -298,8 +304,8 @@ fn do_apply_params(template: ByteArray, params: List<String>) -> ByteArray {
           bytearray.slice(template, 0, from - 1)
             |> bytearray.concat(bytearray.from_string(param))
             |> bytearray.concat(
-                 do_apply_params(bytearray.drop(template, to + 1), rest_params),
-               )
+                do_apply_params(bytearray.drop(template, to + 1), rest_params),
+              )
       }
     [] -> template
   }
@@ -408,98 +414,98 @@ fn to_bytearray(byte: Int) {
 fn do_format_cbor(bytes) {
   bytes
     |> bytearray.foldl(
-         ("", 0, False, ""),
-         fn(byte, results) {
-           let (builder, level, has_token, token) = results
-           let chr = to_bytearray(byte)
-           if is_open(chr) {
-             (
-               builder
-                 |> bytearray.concat(chr),
-               level + 1,
-               has_token,
-               token,
-             )
-           } else if is_close(chr) {
-             (
-               builder
-                 |> fn(builder) {
-                      if !has_token && builtin.length_of_bytearray(token) > 0 {
-                        builder
-                          |> bytearray.concat(", # ")
-                          |> bytearray.concat(
-                               token
-                                 |> hex_to_string,
-                             )
-                      } else {
-                        builder
-                      }
+        ("", 0, False, ""),
+        fn(byte, results) {
+          let (builder, level, has_token, token) = results
+          let chr = to_bytearray(byte)
+          if is_open(chr) {
+            (
+              builder
+                |> bytearray.concat(chr),
+              level + 1,
+              has_token,
+              token,
+            )
+          } else if is_close(chr) {
+            (
+              builder
+                |> fn(builder) {
+                    if !has_token && builtin.length_of_bytearray(token) > 0 {
+                      builder
+                        |> bytearray.concat(", # ")
+                        |> bytearray.concat(
+                            token
+                              |> hex_to_string,
+                          )
+                    } else {
+                      builder
                     }
-                 |> fn(builder) {
-                      // pretty empty struct to be inline
-                      let last_chr = builder |> pop_back(level + 1) |> last_char
-                      if is_open(last_chr) {
-                        builder |> pop_back(level + 1)
-                      } else {
-                        builder |> newline
-                      }
+                  }
+                |> fn(builder) {
+                    // pretty empty struct to be inline
+                    let last_chr = builder |> pop_back(level + 1) |> last_char
+                    if is_open(last_chr) {
+                      builder |> pop_back(level + 1)
+                    } else {
+                      builder |> newline
                     }
-                 |> bytearray.concat(chr),
-               level - 1,
-               has_token,
-               "",
-             )
-           } else if chr == "'" {
-             (builder |> bytearray.concat(chr), level, !has_token, token)
-           } else if chr == "," {
-             (
-               builder
-                 |> bytearray.concat(chr)
-                 |> fn(builder) {
-                      if !has_token && builtin.length_of_bytearray(token) > 0 {
-                        builder
-                          |> bytearray.concat(" # ")
-                          |> bytearray.concat(
-                               token
-                                 |> hex_to_string,
-                             )
-                      } else {
-                        builder
-                      }
+                  }
+                |> bytearray.concat(chr),
+              level - 1,
+              has_token,
+              "",
+            )
+          } else if chr == "'" {
+            (builder |> bytearray.concat(chr), level, !has_token, token)
+          } else if chr == "," {
+            (
+              builder
+                |> bytearray.concat(chr)
+                |> fn(builder) {
+                    if !has_token && builtin.length_of_bytearray(token) > 0 {
+                      builder
+                        |> bytearray.concat(" # ")
+                        |> bytearray.concat(
+                            token
+                              |> hex_to_string,
+                          )
+                    } else {
+                      builder
                     }
-                 |> newline,
-               level,
-               has_token,
-               if !has_token {
-                 ""
-               } else {
-                 token
-               },
-             )
-           } else if chr == "_" {
-             (
-               builder //  |> pop_back(level + 1)
-                 |> newline,
-               level,
-               has_token,
-               token,
-             )
-           } else if chr == " " {
-             (builder, level, has_token, token)
-           } else {
-             (
-               builder |> bytearray.concat(chr),
-               level,
-               has_token,
-               if has_token {
-                 token |> bytearray.concat(chr)
-               } else {
-                 token
-               },
-             )
-           }
-         },
-       )
+                  }
+                |> newline,
+              level,
+              has_token,
+              if !has_token {
+                ""
+              } else {
+                token
+              },
+            )
+          } else if chr == "_" {
+            (
+              builder //  |> pop_back(level + 1)
+                |> newline,
+              level,
+              has_token,
+              token,
+            )
+          } else if chr == " " {
+            (builder, level, has_token, token)
+          } else {
+            (
+              builder |> bytearray.concat(chr),
+              level,
+              has_token,
+              if has_token {
+                token |> bytearray.concat(chr)
+              } else {
+                token
+              },
+            )
+          }
+        },
+      )
     |> first_of_quad
 }
 
