@@ -83,24 +83,17 @@ fn log(self: a, serializer: fn(a) -> String) {
 So we can attach it to anywhere like this:
 
 ```diff
-Input {
-  output_reference: OutputReference(TransactionId('tx_0'), 0),
+let input = Input {
+  output_reference: OutputReference(TransactionId("tx_0"), 0),
   output: Output {
+    value: value.from_lovelace(111_000_000) |> value.add("pid", "name", 1),
     address: Address {
-      payment_credential: ScriptCredential('script_hash')
-      stake_credential: None
+      payment_credential: ScriptCredential("script_hash"),
+      stake_credential: None,
     },
-    value: Value ([
-        h'',
-        h'',
-        111000000
-    ],[
-        h'706964', # pid
-        h'6E616D65', # name
-        1
-    ]),
-    datum: NoDatum
-  }
+    datum: NoDatum,
+    reference_script: None,
+  },
 }
 + |> log(stringify.input)
 ```

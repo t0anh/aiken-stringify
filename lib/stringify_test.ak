@@ -1,7 +1,6 @@
 use aiken/bytearray
 use aiken/cbor
 use aiken/dict
-use aiken/string
 use aiken/transaction.{
   InlineDatum, Input, Mint, NoDatum, Output, OutputReference, ScriptPurpose,
   Spend, Transaction, TransactionId,
@@ -98,10 +97,7 @@ test log_data() {
 }
 
 fn script_purpose_compare(a: ScriptPurpose, b: ScriptPurpose) {
-  bytearray.compare(
-    a |> cbor.diagnostic |> string.to_bytearray,
-    b |> cbor.diagnostic |> string.to_bytearray,
-  )
+  bytearray.compare(cbor.serialise(a), cbor.serialise(b))
 }
 
 test log_tx() {

@@ -361,7 +361,7 @@ fn is_close(chr: ByteArray) {
   }
 }
 
-pub fn newline(self: ByteArray) {
+fn newline(self: ByteArray) {
   self |> bytearray.concat("\n")
 }
 
